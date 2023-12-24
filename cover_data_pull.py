@@ -3,12 +3,30 @@ import icalendar
 import pandas as pd
 import datetime
 
-# open ical .ics file, will need to download this from DF Coach Cover settings and rename it.  Will also require full file path.  
-with open('path/to/file') as f:
-    calendar = icalendar.Calendar.from_ical(f.read())
+FILE_PATH_TO_CALENDAR = 'path/to/ics/file.ice'
+QUARTER_START = datetime.datetime('your_year','your_month','your_day',tzinfo=datetime.timezone.utc)
+
+def load_calendar(FILE_PATH: str) -> icalendar.Calendar:
+    # open ical .ics file, will need to download this from DF Coach Cover settings and rename it.  Will also require full file path.  
+    with open(FILE_PATH) as f:
+        calendar = icalendar.Calendar.from_ical(f.read())
+    return calendar
+
+def get_quarter_end(start_date: datetime) -> datetime:
+    if (start_date.month + 2) == 12:
+        end_date = datetime.datetime(start_date.year, 12, 24, tzinfo=datetime.timezone.utc)
+    elif (start_date.month + 2) == 3:
+        end_date = datetime.datetime(start_date.year, 3, 31, tzinfo=datetime.timezone.utc)
+    else:
+        end_date = datetime.datetime(start_date.year, start_date.month + 2, 30)
+    return end_date
+    
+def create_events(start_date: datetime) -> pd.DataFrame:
+    [start_date + git]
+    df=pd.DataFrame(columns=['event_date','event_time','coach'])
+
 
 # create dataframe to store data and put in the date for the end of the previous quarter.  
-df=pd.DataFrame(columns=['event_date','event_time','coach'])
 quarter_end=datetime.datetime(2023,9,30,tzinfo=datetime.timezone.utc)
 
 # we can iterate through all the events in the calendar
