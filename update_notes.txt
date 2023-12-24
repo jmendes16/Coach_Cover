@@ -1,0 +1,8 @@
+for event in calendar.walk('VEVENT'):
+    print(event.get('DTSTART').dt,event.get('TRANSP'),event.get('RRULE'),event.get('ATTENDEE'))
+
+# events don't exist until people book into them
+# don't need transparent events but these are days/quarters registered earlier on in the life of the calendar
+# don't need RRULE (recurrence rule) events
+
+# solution for missing events (ones where no one has booked in), make them in Python script
