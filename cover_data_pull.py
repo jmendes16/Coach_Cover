@@ -4,7 +4,7 @@ import pandas as pd
 import datetime
 
 FILE_PATH_TO_CALENDAR = 'path/to/ics/file.ice'
-QUARTER_START = datetime.datetime('your_year','your_month','your_day',tzinfo=datetime.timezone.utc)
+QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
 
 def load_calendar(FILE_PATH: str) -> icalendar.Calendar:
     # open ical .ics file, will need to download this from DF Coach Cover settings and rename it.  Will also require full file path.  
@@ -13,19 +13,29 @@ def load_calendar(FILE_PATH: str) -> icalendar.Calendar:
     return calendar
 
 def get_quarter_end(start_date: datetime) -> datetime:
-    if (start_date.month + 2) == 12:
+    if (start_date.month) == 10:
         end_date = datetime.datetime(start_date.year, 12, 24, tzinfo=datetime.timezone.utc)
-    elif (start_date.month + 2) == 3:
+    elif (start_date.month) == 1:
         end_date = datetime.datetime(start_date.year, 3, 31, tzinfo=datetime.timezone.utc)
     else:
-        end_date = datetime.datetime(start_date.year, start_date.month + 2, 30)
+        end_date = datetime.datetime(start_date.year, start_date.month + 2, 30, tzinfo=datetime.timezone.utc)
     return end_date
     
 def create_events(start_date: datetime) -> pd.DataFrame:
-    [start_date + git]
+    all_dates = [start_date + datetime.timedelta(i) for i in range((get_quarter_end(start_date) - start_date).days + 1)]
+    cover_days = list(filter(lambda x: x.weekday() in [y for y in range(1,5)], all_dates))
     df=pd.DataFrame(columns=['event_date','event_time','coach'])
+    for day in cover_days:
+        if day.weekday() == 4:
+            df.loc[len(df)]={'event_date':day.date(), 'event_time':'am', 'coach':None}
+        else:
+            df.loc[len(df)]={'event_date':day.date(), 'event_time':'am', 'coach':None}
+            df.loc[len(df)]={'event_date':day.date(), 'event_time':'pm', 'coach':None}
+    return df
 
+print(create_events(QUARTER_START).head(15))
 
+'''
 # create dataframe to store data and put in the date for the end of the previous quarter.  
 quarter_end=datetime.datetime(2023,9,30,tzinfo=datetime.timezone.utc)
 
@@ -54,3 +64,4 @@ df.coach = df.coach.str.replace('.',' ')
 df.head()
 
 df.to_excel('CoachCoverQ3.xlsx') # this does add in some extra 'no covers' I assume this is when the recurring events are set up.
+'''
