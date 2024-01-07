@@ -3,7 +3,7 @@ import icalendar
 import pandas as pd
 import datetime
 
-FILE_PATH_TO_CALENDAR = 'path/to/ics/file.ice'
+FILE_PATH_TO_CALENDAR = 'path/to/ics/file.ics'
 QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
 
 def load_calendar(FILE_PATH: str) -> icalendar.Calendar:
@@ -33,7 +33,14 @@ def create_events(start_date: datetime) -> pd.DataFrame:
             df.loc[len(df)]={'event_date':day.date(), 'event_time':'pm', 'coach':None}
     return df
 
-print(create_events(QUARTER_START).head(15))
+# function test
+# print(create_events(QUARTER_START).head(15))
+
+def get_slot_booking(event_table: pd.DataFrame, event_date: datetime.datetime, event_time: str, coach_name: str) -> bool:
+    return coach_name in event_table.loc[(event_table.event_date == event_date.date()) & (event_table.event_time == event_time)].coach.to_list()
+
+# function test
+# print(get_slot_booking(create_events(QUARTER_START),datetime.datetime(2024,1,11,tzinfo=datetime.timezone.utc),'am',None))
 
 '''
 # create dataframe to store data and put in the date for the end of the previous quarter.  
