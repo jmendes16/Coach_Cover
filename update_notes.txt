@@ -6,3 +6,5 @@ for event in calendar.walk('VEVENT'):
 # don't need RRULE (recurrence rule) events
 
 # solution for missing events (ones where no one has booked in), make them in Python script
+
+# Need to check pivot table from output, if matching then perform merge.  

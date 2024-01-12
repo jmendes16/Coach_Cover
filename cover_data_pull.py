@@ -3,8 +3,8 @@ import icalendar
 import pandas as pd
 import datetime
 
-FILE_PATH_TO_CALENDAR = 'path/to/ics/file.ics'
-QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
+FILE_PATH_TO_CALENDAR = r'C:\Users\joel.braganzamendes\OneDrive - Multiverse\Documents\CoachCoverCalendar0112v3.ics'
+QUARTER_START = datetime.datetime(2024,1,1,tzinfo=datetime.timezone.utc)
 
 def load_calendar(FILE_PATH: str) -> icalendar.Calendar:
     # open ical .ics file, will need to download this from DF Coach Cover settings and rename it.  Will also require full file path.  
@@ -41,18 +41,18 @@ def create_events(start_date: datetime) -> pd.DataFrame:
             df.loc[len(df)] = {
                 "event_date": day.date(),
                 "event_time": "am",
-                "coach": None,
+                "coach": 'no cover',
             }
         else:
             df.loc[len(df)] = {
                 "event_date": day.date(),
                 "event_time": "am",
-                "coach": None,
+                "coach": 'no cover',
             }
             df.loc[len(df)] = {
                 "event_date": day.date(),
                 "event_time": "pm",
-                "coach": None,
+                "coach": 'no cover',
             }
     return df
 
@@ -75,7 +75,7 @@ def event_booked(
     )
 
 # function test
-# print(event_booked(create_events(QUARTER_START),datetime.date(2024,1,11),'am',None))
+# print(event_booked(create_events(QUARTER_START),datetime.date(2024,1,11),'am','no cover'))
 
 def event_empty(
     event_table: pd.DataFrame,
@@ -86,7 +86,7 @@ def event_empty(
         event_table,
         event_date,
         event_time,
-        None
+        'no cover'
     )
 
 # function test
@@ -172,10 +172,10 @@ if __name__ == '__main__':
                 extract_time(event),
                 extract_coach(event)
             )
-    
+    event_table.reset_index(drop=True, inplace=True)
     print(event_table.head())
 
-    event_table.to_csv('your/desired/output/file.csv')
+    event_table.to_csv('C:/Users/joel.braganzamendes/OneDrive - Multiverse/Documents/CoachCoverQ4Final.csv')
 
 '''
 # create dataframe to store data and put in the date for the end of the previous quarter.  
