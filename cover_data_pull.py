@@ -99,7 +99,7 @@ def event_empty(
 def valid_slot(slot: icalendar.Event) -> bool:
     '''checks if an event on the calendar is valid.  ics files include additional events for recurring meetings etc.'''
     valid = (
-        type(slot.get("DTSTART").dt is datetime.datetime) # datetime is a subclass of date so require type rather than isinstance
+        type(slot.get("DTSTART").dt) is datetime.datetime # datetime is a subclass of date so require type rather than isinstance
         and slot.get("TRANSP") == "OPAQUE" # this appears more in earlier quarters but may still come up
         and slot.get("RRULE") is None # this gets rid of the recurrence rule events that always contain no coaches
         and slot.get("DTSTART").dt >= QUARTER_START
