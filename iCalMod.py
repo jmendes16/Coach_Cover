@@ -2,14 +2,16 @@ import icalendar
 import pandas as pd
 import datetime
 
-FILE_PATH_TO_CALENDAR = r'C:\Users\joel.braganzamendes\OneDrive - Multiverse\Documents\CoachCoverCalendar0112v3.ics'
-QUARTER_START = datetime.datetime(2024,1,1,tzinfo=datetime.timezone.utc)
+FILE_PATH_TO_CALENDAR = 'path/to/calendar/file.ics'
+QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
 
 def control_format(method):
+    '''decorator for formatting output when extracting data from calendar'''
     def wrapper(*args, **kwargs):
         result = method(*args, **kwargs)
 
         if args[2].lower() == 'coach':
+            # formats coaches as a list of lower case strings
             if result is None:
                 return ['no cover']
             elif isinstance(result, str):
@@ -23,13 +25,6 @@ def control_format(method):
         else:
             print('ICSError: Error retrieving data from calendar file. Potentially requested additional data')
             return result
-
-
-        # Perform some actions after the method call
-        # if method.__name__.startswith("extract_"):
-        #     assert isinstance(result, (datetime.datetime, str, list)), "TypeError: Error in data extraction"
-            
-        # if method.__name__.endswith("coach"):
     return wrapper
 
 class CalendarTool:
@@ -67,23 +62,6 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
             and slot.get("DTSTART").dt <= self.get_quarter_end(QUARTER_START)
         )
         return valid
-    # @control_format
-    # def extract_coach(self, slot: icalendar.Event) -> (str, list):
-    #     '''gets the coach information from a calendar event'''
-    #     event_attendees = (
-    #         "mailto:no cover@multiverse.io"
-    #         if slot.get("ATTENDEE") == None
-    #         else slot.get("ATTENDEE")
-    #     ) # if there is no coach we want to reassign/check for 'no cover'
-    #     return event_attendees
-
-    # @control_format
-    # def extract_time(self, slot):
-    #     # Getting time information code here
-
-    # @control_format
-    # def extract_date(self, slot):
-    #     # Getting date information code here
 
     @control_format
     def extract(self, slot: icalendar.Event, detail: str) -> (str, list, datetime.datetime):
@@ -95,13 +73,10 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
             return slot.get('DTSTART')
         else:
             return slot.get(detail)
-    
-cover = MyCalendar(FILE_PATH_TO_CALENDAR)
-#n = 0
-for event in cover.calendar.walk('VEVENT'):
-    #print( type(event.get("DTSTART").dt) is datetime.datetime and event.get("DTSTART").dt >= QUARTER_START)
-    if cover.valid_slot(event):
-        print(cover.extract(event,'Coach'),cover.extract(event,'TIME'),cover.extract(event,'date'))
-    # n += 1
-    # if n == 40:
-    #     break
+
+# test for MyCalendar class    
+# cover = MyCalendar(FILE_PATH_TO_CALENDAR)
+
+# for event in cover.calendar.walk('VEVENT'):
+#     if cover.valid_slot(event):
+#         print(cover.extract(event,'Coach'),cover.extract(event,'TIME'),cover.extract(event,'date'))
