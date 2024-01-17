@@ -2,8 +2,8 @@ import icalendar
 import pandas as pd
 import datetime
 
-FILE_PATH_TO_CALENDAR = 'path/to/calendar/file.ics'
-QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
+FILE_PATH_TO_CALENDAR = r'C:\Users\joel.braganzamendes\OneDrive - Multiverse\Documents\CoachCoverCalendar0112v3.ics'
+QUARTER_START = datetime.datetime(2024,1,1,tzinfo=datetime.timezone.utc)
 
 def control_format(method):
     '''decorator for formatting output when extracting data from calendar'''
@@ -73,10 +73,105 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
             return slot.get('DTSTART')
         else:
             return slot.get(detail)
+        
+    def slots(self) -> icalendar.Event:
+        for slot in self.calendar.walk('VEVENT'):
+            yield slot
 
 # test for MyCalendar class    
 # cover = MyCalendar(FILE_PATH_TO_CALENDAR)
 
-# for event in cover.calendar.walk('VEVENT'):
+# for event in cover.slots():
 #     if cover.valid_slot(event):
 #         print(cover.extract(event,'Coach'),cover.extract(event,'TIME'),cover.extract(event,'date'))
+
+class EventTable(pd.DataFrame,CalendarTool):
+
+    def __init__(self, start_date: datetime.datetime):
+        super().__init__(columns=["event_date", "event_time", "coach"])
+        all_dates = [
+        start_date + datetime.timedelta(i)
+        for i in range((self.get_quarter_end(start_date) - start_date).days + 1)
+        ]
+        cover_days = list(
+            filter(lambda x: x.weekday() in [y for y in range(1, 5)], all_dates)
+        ) # filtering out Monday, Saturday and Sunday
+        
+        for day in cover_days:
+            if day.weekday() == 4:
+                self.loc[len(self)] = {
+                    "event_date": day.date(),
+                    "event_time": "am",
+                    "coach": 'no cover',
+                } # making sure there is only one cover slot on Friday
+            else:
+                self.loc[len(self)] = {
+                    "event_date": day.date(),
+                    "event_time": "am",
+                    "coach": 'no cover',
+                }
+                self.loc[len(self)] = {
+                    "event_date": day.date(),
+                    "event_time": "pm",
+                    "coach": 'no cover',
+                }
+    
+    def event_booked(
+        self,
+        event_date: datetime.datetime,
+        event_time: str,
+        coach_name: str,
+    ) -> bool:
+        '''checks if a coach is already assigned to a specific cover slot'''
+        return (
+            coach_name
+            in self.loc[
+                (self.event_date == event_date)
+                & (self.event_time == event_time)
+            ].coach.to_list()
+        )
+    
+    def event_empty(
+        self,
+        event_date: datetime.datetime,
+        event_time: str
+    ) -> bool:
+        '''checks if a cover slot is unassigned'''
+        return self.event_booked(
+            event_date,
+            event_time,
+            'no cover'
+        )
+    
+    def set_coach(
+        self,
+        event_date: datetime.datetime,
+        event_time: str,
+        coach_name: list,
+    ):
+        '''adds/updates information in the event table dataframe'''
+        for name in coach_name:
+            if self.event_empty(
+                event_date,
+                event_time,
+            ):
+                self.loc[
+                    (self.event_date == event_date)
+                    & (self.event_time == event_time), 
+                    'coach'
+                ] = name
+            elif not self.event_booked(event_date, event_time, name):
+                self.loc[len(self)] = {
+                    "event_date": event_date,
+                    "event_time": event_time,
+                    "coach": name,
+                } # if not already assigned to a slot but someone else is we need to create a new entry in the table
+        self.sort_values('event_date', inplace=True)
+
+# test EventTable init function
+# event_table = EventTable(QUARTER_START)
+# print(event_table.head())
+
+# event booked function test
+# event_table = EventTable(QUARTER_START)
+# print(event_table.event_empty(datetime.date(2024,1,11),'am'))
