@@ -8,10 +8,10 @@ if __name__ == '__main__':
     event_table = EventTable(QUARTER_START)
 
     for event in cover.slots():
-        if cover.valid_slot(event):
+        if cover.valid_slot(event, QUARTER_START):
             event_table.set_coach(cover.get_slot_data(event))
 
     event_table.reset_index(drop=True, inplace=True) # adding new rows makes for an ugly index on the output
     print(event_table.head()) # for troubleshooting
 
-    event_table.to_csv('path/to/your/output.csv')
+    event_table.to_csv('path/to/your/output/file.csv')

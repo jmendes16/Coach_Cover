@@ -52,7 +52,7 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
         with open(file_path) as f:
             self.calendar = icalendar.Calendar.from_ical(f.read())
 
-    def valid_slot(self, slot: icalendar.Event) -> bool:
+    def valid_slot(self, slot: icalendar.Event, QUARTER_START: datetime.datetime) -> bool:
         '''checks if an event on the calendar is valid.  ics files include additional events for recurring meetings etc.'''
         valid = (
             type(slot.get("DTSTART").dt) is datetime.datetime # datetime is a subclass of date so require type rather than isinstance
@@ -89,7 +89,7 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
 # cover = MyCalendar(FILE_PATH_TO_CALENDAR)
 
 # for event in cover.slots():
-#     if cover.valid_slot(event):
+#     if cover.valid_slot(event, QUARDER_START):
 #         print(cover.extract(event,'Coach'),cover.extract(event,'TIME'),cover.extract(event,'date'))
 
 class EventTable(pd.DataFrame,CalendarTool):

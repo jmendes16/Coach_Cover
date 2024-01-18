@@ -3,7 +3,7 @@ import icalendar
 import pandas as pd
 import datetime
 
-FILE_PATH_TO_CALENDAR = 'path/to/your/file.ics'
+FILE_PATH_TO_CALENDAR = 'path/to/your/calendar.ics'
 QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
 
 def load_calendar(FILE_PATH: str) -> icalendar.Calendar:
@@ -184,4 +184,4 @@ if __name__ == '__main__':
     event_table.reset_index(drop=True, inplace=True) # adding new rows makes for an ugly index on the output
     print(event_table.head()) # for troubleshooting
 
-    event_table.to_csv('path/to/your/output.csv')
+    event_table.to_csv('path/to/your/output/file.csv')
