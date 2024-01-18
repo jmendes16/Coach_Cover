@@ -2,9 +2,6 @@ import icalendar
 import pandas as pd
 import datetime
 
-# FILE_PATH_TO_CALENDAR = 'path/to/your/calendar.ics'
-# QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
-
 def control_format(method):
     '''decorator for formatting output when extracting data from calendar'''
     def wrapper(*args, **kwargs):
@@ -44,7 +41,7 @@ class CalendarTool:
             )
         return end_date
 
-class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PATH_TO_CALENDAR)
+class MyCalendar(icalendar.Calendar, CalendarTool):
 
     def __init__(self, file_path: str):
         super().__init__()
@@ -52,29 +49,32 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
         with open(file_path) as f:
             self.calendar = icalendar.Calendar.from_ical(f.read())
 
-    def valid_slot(self, slot: icalendar.Event, QUARTER_START: datetime.datetime) -> bool:
+    def valid_slot(self, slot: icalendar.Event, start_date: datetime.datetime) -> bool:
         '''checks if an event on the calendar is valid.  ics files include additional events for recurring meetings etc.'''
         valid = (
             type(slot.get("DTSTART").dt) is datetime.datetime # datetime is a subclass of date so require type rather than isinstance
             and slot.get("TRANSP") == "OPAQUE" # this appears more in earlier quarters but may still come up
             and slot.get("RRULE") is None # this gets rid of the recurrence rule events that always contain no coaches
-            and slot.get("DTSTART").dt >= QUARTER_START
-            and slot.get("DTSTART").dt <= self.get_quarter_end(QUARTER_START)
+            and slot.get("DTSTART").dt >= start_date
+            and slot.get("DTSTART").dt <= self.get_quarter_end(start_date)
         )
         return valid
 
     @control_format
-    def extract(self, slot: icalendar.Event, detail: str) -> (str, list, datetime.datetime):
-        if detail.lower() == 'coach':
-            return slot.get('ATTENDEE')
-        elif detail.lower() == 'time':
-            return slot.get('DTSTART')
-        elif detail.lower() == 'date':
-            return slot.get('DTSTART')
+    def extract(
+        self, slot: icalendar.Event, detail: str
+    ) -> (str, list, datetime.datetime):
+        if detail.lower() == "coach":
+            return slot.get("ATTENDEE")
+        elif detail.lower() == "time":
+            return slot.get("DTSTART")
+        elif detail.lower() == "date":
+            return slot.get("DTSTART")
         else:
             return slot.get(detail)
 
     def get_slot_data(self, slot: icalendar.Event) -> dict:
+        '''gets data from calendar and returns it in a format designed for the events table'''
         return {
             'event_date':self.extract(slot, 'date'),
             'event_time':self.extract(slot, 'time'),
@@ -82,15 +82,9 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
             }    
 
     def slots(self) -> icalendar.Event:
+        '''generator function for events in calendar'''
         for slot in self.calendar.walk('VEVENT'):
             yield slot
-
-# test for MyCalendar class    
-# cover = MyCalendar(FILE_PATH_TO_CALENDAR)
-
-# for event in cover.slots():
-#     if cover.valid_slot(event, QUARDER_START):
-#         print(cover.extract(event,'Coach'),cover.extract(event,'TIME'),cover.extract(event,'date'))
 
 class EventTable(pd.DataFrame,CalendarTool):
 
@@ -165,18 +159,12 @@ class EventTable(pd.DataFrame,CalendarTool):
                     & (self.event_time == event_data['event_time']), 
                     'coach'
                 ] = name
-            elif not self.event_booked(event_data['event_date'], event_data['event_time'], name):
+            elif not self.event_booked(
+                event_data['event_date'], event_data['event_time'], name
+            ):
                 self.loc[len(self)] = {
                     "event_date": event_data['event_date'],
                     "event_time": event_data['event_time'],
                     "coach": name,
                 } # if not already assigned to a slot but someone else is we need to create a new entry in the table
         self.sort_values('event_date', inplace=True)
-
-# test EventTable init function
-# event_table = EventTable(QUARTER_START)
-# print(event_table.head())
-
-# event booked function test
-# event_table = EventTable(QUARTER_START)
-# print(event_table.event_empty(datetime.date(2024,1,11),'am'))
