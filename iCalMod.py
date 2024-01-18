@@ -2,8 +2,8 @@ import icalendar
 import pandas as pd
 import datetime
 
-FILE_PATH_TO_CALENDAR = r'C:\Users\joel.braganzamendes\OneDrive - Multiverse\Documents\CoachCoverCalendar0112v3.ics'
-QUARTER_START = datetime.datetime(2024,1,1,tzinfo=datetime.timezone.utc)
+# FILE_PATH_TO_CALENDAR = 'path/to/your/calendar.ics'
+# QUARTER_START = datetime.datetime('your_year','your_month',1,tzinfo=datetime.timezone.utc)
 
 def control_format(method):
     '''decorator for formatting output when extracting data from calendar'''
@@ -73,7 +73,14 @@ class MyCalendar(icalendar.Calendar, CalendarTool): # cover = MyCalendar(FILE_PA
             return slot.get('DTSTART')
         else:
             return slot.get(detail)
-        
+
+    def get_slot_data(self, slot: icalendar.Event) -> dict:
+        return {
+            'event_date':self.extract(slot, 'date'),
+            'event_time':self.extract(slot, 'time'),
+            'coach':self.extract(slot,'coach')
+            }    
+
     def slots(self) -> icalendar.Event:
         for slot in self.calendar.walk('VEVENT'):
             yield slot
@@ -145,25 +152,23 @@ class EventTable(pd.DataFrame,CalendarTool):
     
     def set_coach(
         self,
-        event_date: datetime.datetime,
-        event_time: str,
-        coach_name: list,
+        event_data: dict
     ):
         '''adds/updates information in the event table dataframe'''
-        for name in coach_name:
+        for name in event_data['coach']:
             if self.event_empty(
-                event_date,
-                event_time,
+                event_data['event_date'],
+                event_data['event_time'],
             ):
                 self.loc[
-                    (self.event_date == event_date)
-                    & (self.event_time == event_time), 
+                    (self.event_date == event_data['event_date'])
+                    & (self.event_time == event_data['event_time']), 
                     'coach'
                 ] = name
-            elif not self.event_booked(event_date, event_time, name):
+            elif not self.event_booked(event_data['event_date'], event_data['event_time'], name):
                 self.loc[len(self)] = {
-                    "event_date": event_date,
-                    "event_time": event_time,
+                    "event_date": event_data['event_date'],
+                    "event_time": event_data['event_time'],
                     "coach": name,
                 } # if not already assigned to a slot but someone else is we need to create a new entry in the table
         self.sort_values('event_date', inplace=True)
