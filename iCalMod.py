@@ -1,6 +1,6 @@
 import icalendar
 import pandas as pd
-import datetime
+from datetime import datetime, timezone, timedelta
 
 def control_format(method):
     '''decorator for formatting output when extracting data from calendar'''
@@ -28,16 +28,16 @@ class CalendarTool:
     def get_quarter_end(self, start_date: datetime) -> datetime:
         '''calculate the final day of the quarter'''
         if (start_date.month) == 10:
-            end_date = datetime.datetime(
-                start_date.year, 12, 24, tzinfo=datetime.timezone.utc
+            end_date = datetime(
+                start_date.year, 12, 24, 17, tzinfo=timezone.utc
             ) # this is to account for company Christmas shutdown
         elif (start_date.month) == 1:
-            end_date = datetime.datetime(
-                start_date.year, 3, 31, tzinfo=datetime.timezone.utc
+            end_date = datetime(
+                start_date.year, 3, 31, 17, tzinfo=timezone.utc
             ) # since March is the only quarter ending on the 31st
         else:
-            end_date = datetime.datetime(
-                start_date.year, start_date.month + 2, 30, tzinfo=datetime.timezone.utc
+            end_date = datetime(
+                start_date.year, start_date.month + 2, 30, 17, tzinfo=timezone.utc
             )
         return end_date
 
@@ -49,21 +49,23 @@ class MyCalendar(icalendar.Calendar, CalendarTool):
         with open(file_path) as f:
             self.calendar = icalendar.Calendar.from_ical(f.read())
 
-    def valid_slot(self, slot: icalendar.Event, start_date: datetime.datetime) -> bool:
+    def valid_slot(self, slot: icalendar.Event, start_date: datetime) -> bool:
         '''checks if an event on the calendar is valid.  ics files include additional events for recurring meetings etc.'''
         valid = (
-            type(slot.get("DTSTART").dt) is datetime.datetime # datetime is a subclass of date so require type rather than isinstance
+            type(slot.get("DTSTART").dt) is datetime # datetime is a subclass of date so require type rather than isinstance
             and slot.get("TRANSP") == "OPAQUE" # this appears more in earlier quarters but may still come up
             and slot.get("RRULE") is None # this gets rid of the recurrence rule events that always contain no coaches
             and slot.get("DTSTART").dt >= start_date
             and slot.get("DTSTART").dt <= self.get_quarter_end(start_date)
+            and slot.get("DTSTART").dt.weekday() in range(1,5)
+            and (slot.get("DTSTART").dt.hour == 9 if slot.get("DTSTART").dt.weekday() == 4 else True)
         )
         return valid
 
     @control_format
     def extract(
         self, slot: icalendar.Event, detail: str
-    ) -> (str, list, datetime.datetime):
+    ) -> (str, list, datetime):
         if detail.lower() == "coach":
             return slot.get("ATTENDEE")
         elif detail.lower() == "time":
@@ -88,14 +90,14 @@ class MyCalendar(icalendar.Calendar, CalendarTool):
 
 class EventTable(pd.DataFrame,CalendarTool):
 
-    def __init__(self, start_date: datetime.datetime):
+    def __init__(self, start_date: datetime):
         super().__init__(columns=["event_date", "event_time", "coach"])
         all_dates = [
-        start_date + datetime.timedelta(i)
+        start_date + timedelta(i)
         for i in range((self.get_quarter_end(start_date) - start_date).days + 1)
         ]
         cover_days = list(
-            filter(lambda x: x.weekday() in [y for y in range(1, 5)], all_dates)
+            filter(lambda x: x.weekday() in range(1, 5), all_dates)
         ) # filtering out Monday, Saturday and Sunday
         
         for day in cover_days:
@@ -119,7 +121,7 @@ class EventTable(pd.DataFrame,CalendarTool):
     
     def event_booked(
         self,
-        event_date: datetime.datetime,
+        event_date: datetime,
         event_time: str,
         coach_name: str,
     ) -> bool:
@@ -134,7 +136,7 @@ class EventTable(pd.DataFrame,CalendarTool):
     
     def event_empty(
         self,
-        event_date: datetime.datetime,
+        event_date: datetime,
         event_time: str
     ) -> bool:
         '''checks if a cover slot is unassigned'''
